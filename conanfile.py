@@ -34,9 +34,8 @@ class SplinterDb(ConanFile):
         pc.generate()
 
     def source(self):
-        print(f"cwd={os.getcwd()}")
         git = Git(self)
-        #git.clone(url="https://github.com/vmware/splinterdb", target=".")
+        git.checkout_from_conandata_coordinates()
 
     def build(self):
         run_tests = ""
@@ -51,6 +50,7 @@ class SplinterDb(ConanFile):
                  cwd=self.source_folder)
 
     def package_info(self):
+        self.cpp_info.cxxflags = ["-DSPLINTERDB_PLATFORM_DIR=platform_linux"]
         self.cpp_info.libs = ["splinterdb"]
 
     #==#==========+==+=+=++=+++++++++++-+-+--+----- --- -- -  -  -   -
