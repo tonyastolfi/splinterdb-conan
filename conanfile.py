@@ -11,13 +11,17 @@ class SplinterDb(ConanFile):
     name = "splinterdb"
     version = "1.0.0"
     settings = "os", "arch", "compiler", "build_type"
-    
+
     requires = [
-        #"libaio/[>=0.3]",
+        #----- --- -- -  -  -   -
+        # We can't use Conan Center's libaio because it is broken when using lto;
+        #  install the system package (e.g., apt get libaio-dev)
+        #
+        # "libaio/[>=0.3]",
+        #----- --- -- -  -  -   -
         "libconfig/[>=1.7]",
         "xxhash/[>=0.8]",
     ]
-
 
     def layout(self):
         self.folders.build = os.path.join("build", str(self.settings.build_type))
@@ -32,39 +36,46 @@ class SplinterDb(ConanFile):
     def source(self):
         print(f"cwd={os.getcwd()}")
         git = Git(self)
-        try:
-            git.get_commit()
-        except ConanException:
-            git.clone(url="https://github.com/vmware/splinterdb", target=".")
+        #git.clone(url="https://github.com/vmware/splinterdb", target=".")
 
     def build(self):
-        print(f"source_folder={self.source_folder}")
-        print(f"build_folder={self.build_folder}")
+        run_tests = ""
+        if not self.conf.get("user.build:skip_run_tests", default=False):
+            run_tests = "run-tests"
 
+        self.run(command=self._splinterdb_make_command(["all", run_tests]),
+                 cwd=self.source_folder)
+
+    def package(self):
+        self.run(command=self._splinterdb_make_command(["install"]),
+                 cwd=self.source_folder)
+
+    def package_info(self):
+        self.cpp_info.libs = ["splinterdb"]
+
+    #==#==========+==+=+=++=+++++++++++-+-+--+----- --- -- -  -  -   -
+
+    def _splinterdb_make_command(self, targets):
         splinter_build_modes = {
             "Debug": "debug",
             "Release": "release",
             "RelWithDebInfo": "optimized-debug",
         }
 
+        build_mode = splinter_build_modes[str(self.settings.build_type)]
+
         vars = (
-            f"BUILD_MODE={splinter_build_modes[str(self.settings.build_type)]} "
+            f"BUILD_MODE={build_mode} "
             f"BUILD_ROOT={self.build_folder} "
             f"INSTALL_PATH={self.package_folder} "
-            f"CC=gcc-12.2.0 "
-            f"LD=gcc-12.2.0 "
+            f"LD='$(CC)' "
             f"CONAN_INCLUDE_DIR_FLAG=-I "
             f"CONAN_DEFINE_FLAG=-D "
             f"CONAN_LIB_DIR_FLAG=-L "
-            f"CFLAGS='-std=gnu2x $(CONAN_INCLUDE_DIRS) $(CONAN_DEFINES) -Wno-implicit-function-declaration' "
+            f"CFLAGS='-Dalignof=_Alignof $(CONAN_INCLUDE_DIRS) $(CONAN_DEFINES) -Wno-implicit-function-declaration' "
             f"LDFLAGS='$(CONAN_LIB_DIRS)'"
         )
 
         conandeps_mk = Path(self.build_folder) / "generators" / "conandeps.mk"
 
-        run_tests = ""
-        if not self.conf.get("user.build:skip_run_tests", default=False):
-            run_tests = "run-tests"
-        
-        self.run(command=f"{vars} make -f {conandeps_mk} -f Makefile clean all {run_tests}",
-                 cwd=self.source_folder)
+        return f"{vars} make -f {conandeps_mk} -f Makefile {' '.join(targets)}"
