@@ -9,7 +9,7 @@ from conan.tools.scm.git import Git
 
 class SplinterDb(ConanFile):
     name = "splinterdb"
-    version = "1.0.0"
+    version = "20250303.0"
     settings = "os", "arch", "compiler", "build_type"
 
     requires = [
