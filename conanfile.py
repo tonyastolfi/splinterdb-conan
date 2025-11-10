@@ -7,9 +7,10 @@ from conan.tools.files import replace_in_file, rm
 from conan.tools.gnu import MakeDeps
 from conan.tools.scm.git import Git
 
+
 class SplinterDb(ConanFile):
     name = "splinterdb"
-    version = "20250303.0"
+    version = "20250825.0"
     settings = "os", "arch", "compiler", "build_type"
 
     requires = [
@@ -48,6 +49,20 @@ class SplinterDb(ConanFile):
     def package(self):
         self.run(command=self._splinterdb_make_command(["install"]),
                  cwd=self.source_folder)
+
+        version_parts = self.version.split('.')
+        version_major = int(version_parts[0])
+        version_minor = int(version_parts[1]) if len(version_parts) > 1 else 0
+        version_patch = int(version_parts[2]) if len(version_parts) > 2 else 0
+
+        version_h = Path(self.package_folder) / "include" / "splinterdb" / "package_version.h"
+        version_h.write_text("""#pragma once
+#define SPLINTERDB_MAJOR_VERSION {version_major}
+#define SPLINTERDB_MINOR_VERSION {version_minor}
+#define SPLINTERDB_PATCH_VERSION {version_patch}
+""".format(version_major=version_major,
+           version_minor=version_minor,
+           version_patch=version_patch))
 
     def package_info(self):
         self.cpp_info.cxxflags = ["-DSPLINTERDB_PLATFORM_DIR=platform_linux"]
