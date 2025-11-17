@@ -1,7 +1,8 @@
 scm:
-  url: "https://github.com/vmware/splinterdb"
-  commit: "2b6d030f7d7aad1dd9c5cbc2e096c0548b5e959c"
+  url: "https://github.com/tonyastolfi/splinterdb"
+  commit: "bfd80c5068141b99ac0fb248f197653556a20dbc"
 
   #==#==========+==+=+=++=+++++++++++-+-+--+----- --- -- -  -  -   -
   # Past releases:
+  #        20250825.0: "2b6d030f7d7aad1dd9c5cbc2e096c0548b5e959c"
   # 1.0.0, 20250303.0: "860d71b9484b37f8250def5e933dcf33dde8920d"
